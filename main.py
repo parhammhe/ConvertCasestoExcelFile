@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pandas as pd
 
@@ -866,3 +867,25 @@ gencost300 = np.array([[2, 0, 0, 3, 0.01, 40, 0],
         [2, 0, 0, 3, 0.2, 20, 0],
         [2, 0, 0, 3, 1.25, 20, 0]])
 gencost300_db = pd.DataFrame(gencost300, columns=['model', 'startup', 'shutdown', 'n', 'c(n-1)', 'c(n-2)', 'c(n-3)'])
+nb300 = bus300.shape[0]
+nl300 = branch300.shape[0]
+
+if any(bus300_db['bus_i'] != list(range(nb300))):
+    print('bus numbering must be consecutive integers starting from 0')
+ ## for each branch, compute the elements of the branch admittance matrix where
+    ##
+    ##      | If |   | Yff  Yft |   | Vf |
+    ##      |    | = |          | * |    |
+    ##      | It |   | Ytf  Ytt |   | Vt |
+    ##
+stat= branch300_db['status'].to_numpy()
+r= branch300_db['r'].to_numpy()
+x= branch300_db['x'].to_numpy()
+b= branch300_db['b'].to_numpy()
+Ys= stat / (r + 1j * x)
+Bc= stat * b
+tap=np.ones(nl300)
+TAP= branch300_db['ratio'].to_numpy()
+i=np.nonzero(TAP)[0]
+tap[i]= TAP[i]
+print("This is a test")
