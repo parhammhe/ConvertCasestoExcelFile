@@ -888,4 +888,14 @@ tap=np.ones(nl300)
 TAP= branch300_db['ratio'].to_numpy()
 i=np.nonzero(TAP)[0]
 tap[i]= TAP[i]
+tap= tap * np.exp(1j * np.pi / 180 * branch300_db['angle'].to_numpy())
+
+Ytt= Ys + 1j * Bc / 2
+Yff= Ytt / (tap * np.conj(tap))
+Yft= - Ys / np.conj(tap)
+Ytf= - Ys / tap
+f= branch300_db['fbus'].to_numpy()
+t= branch300_db['tbus'].to_numpy()
+
+
 print("This is a test")
