@@ -1,6 +1,18 @@
 import sys
 import numpy as np
 import pandas as pd
+import scipy
+import scipy.sparse as sp
+from scipy.sparse import csr_matrix
+from scipy.sparse import lil_matrix
+from scipy.sparse import coo_matrix
+from scipy.sparse import csc_matrix
+from scipy.sparse import bmat
+from scipy.sparse import hstack
+from scipy.sparse import vstack
+from scipy.sparse import diags
+from scipy.sparse import eye
+from scipy.sparse import kron
 
 ## bus data
 # bus_i type Pd Qd Gs Bs area Vm Va baseKV zone Vmax Vmin
@@ -894,8 +906,37 @@ Ytt= Ys + 1j * Bc / 2
 Yff= Ytt / (tap * np.conj(tap))
 Yft= - Ys / np.conj(tap)
 Ytf= - Ys / tap
+
+Buses_index= bus300_db.index
+Buses= bus300_db['bus_i'].to_numpy()
+#create a dictionary to store the index of each bus
+Buses_dict= dict(zip(Buses, Buses_index))
+branch300_db['fbus']= branch300_db['fbus'].map(Buses_dict)
+branch300_db['tbus']= branch300_db['tbus'].map(Buses_dict)
 f= branch300_db['fbus'].to_numpy()
 t= branch300_db['tbus'].to_numpy()
+# Connection matrix for line & from - to buses
+Cf=sp.coo_matrix((np.ones(nl300), (range(nl300), f)), (nl300, nb300)).tocsr()
+# Connection matrix for line & to - from buses
+Ct=sp.coo_matrix((np.ones(nl300), (range(nl300), t)), (nl300, nb300)).tocsr()
+##build yf and yt matrices
+yf= csr_matrix((Yff, (range(nl300), f)), (nl300, nb300)) + csr_matrix((Yft, (range(nl300), t)), (nl300, nb300))
+yt= csr_matrix((Ytf, (range(nl300), f)), (nl300, nb300)) + csr_matrix((Ytt, (range(nl300), t)), (nl300, nb300))
+#build Ybus
+Ybus= Cf.T * yf + Ct.T * yt + \
+        csr_matrix((np.ones(nb300), (range(nb300), range(nb300))), (nb300, nb300))
+
+# Create a csv file with the Bus data
+bus300_db.to_csv('bus300.csv', index=False)
+# Create a csv file with the Branch data
+branch300_db.to_csv('branch300.csv', index=False)
+# Create a csv file with the Generator data
+gen300_db.to_csv('gen300.csv', index=False)
+# Create a csv file with the Generator cost data
+gencost300_db.to_csv('gencost300.csv', index=False)
+# Create a csv file with the Ybus data
+Ybus_df= pd.DataFrame(Ybus.toarray())
+Ybus_df.to_csv('Ybus300.csv', index=False)
 
 
 print("This is a test")
