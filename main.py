@@ -895,13 +895,14 @@ r= branch300_db['r'].to_numpy()
 x= branch300_db['x'].to_numpy()
 b= branch300_db['b'].to_numpy()
 Ys= stat / (r + 1j * x)
+## compute susceptance (note: "b" is susceptance, not admittance)
 Bc= stat * b
 tap=np.ones(nl300)
 TAP= branch300_db['ratio'].to_numpy()
 i=np.nonzero(TAP)[0]
 tap[i]= TAP[i]
 tap= tap * np.exp(1j * np.pi / 180 * branch300_db['angle'].to_numpy())
-
+## connection matrix for line & from buses
 Ytt= Ys + 1j * Bc / 2
 Yff= Ytt / (tap * np.conj(tap))
 Yft= - Ys / np.conj(tap)
