@@ -14,6 +14,8 @@ from scipy.sparse import diags
 from scipy.sparse import eye
 from scipy.sparse import kron
 
+
+baseMVA = 100
 ## bus data
 # bus_i type Pd Qd Gs Bs area Vm Va baseKV zone Vmax Vmin
 bus300 = np.array([
@@ -911,7 +913,10 @@ Ytt= Ys + 1j * Bc / 2
 Yff= Ytt / (tap * np.conj(tap))
 Yft= - Ys / np.conj(tap)
 Ytf= - Ys / tap
-
+## build connection matrices
+Ysh= (bus300_db['Gs'].to_numpy() + 1j * bus300_db['Bs'].to_numpy())/baseMVA
+Ysh_df=pd.DataFrame(Ysh)
+Ysh_df.to_csv('Ysh.csv',index=False)
 Buses_index= bus300_db.index
 Buses= bus300_db['bus_i'].to_numpy()
 #create a dictionary to store the index of each bus
@@ -926,7 +931,14 @@ Ct=sp.coo_matrix((np.ones(nl300), (range(nl300), t)), (nl300, nb300)).tocsr()
 yf= csr_matrix((Yff, (range(nl300), f)), (nl300, nb300)) + csr_matrix((Yft, (range(nl300), t)), (nl300, nb300))
 yt= csr_matrix((Ytf, (range(nl300), f)), (nl300, nb300)) + csr_matrix((Ytt, (range(nl300), t)), (nl300, nb300))
 #build Ybus
-Ybus= Cf.T * yf + Ct.T * yt + csr_matrix((bus300_db['Gs'].to_numpy() + 1j * bus300_db['Bs'].to_numpy(), (range(nb300), range(nb300))), (nb300, nb300))
+Ybus= Cf.T * yf + Ct.T * yt + csr_matrix((Ysh, (range(nb300), range(nb300))), (nb300, nb300))
+#Create a array of non zero elements of Ybus matrix with their indices
+Ybus_nonzero= Ybus.nonzero()
+Ybus_nonzero_data= Ybus.data
+Ybus_nonzero_row= Ybus_nonzero[0]
+Ybus_nonzero_col= Ybus_nonzero[1]
+Ybus_nonzero_df= pd.DataFrame({'row':Ybus_nonzero_row, 'col':Ybus_nonzero_col, 'data':Ybus_nonzero_data})
+Ybus_nonzero_df.to_csv('Ybus_nonzero.csv',index=False)
 # Create a csv file with the Bus data
 bus300_db.to_csv('bus300.csv', index=False)
 # Create a csv file with the Branch data
@@ -937,6 +949,8 @@ gen300_db.to_csv('gen300.csv', index=False)
 gencost300_db.to_csv('gencost300.csv', index=False)
 # Create a csv file with the Ybus data
 Ybus_df= pd.DataFrame(Ybus.toarray())
+#eliminate the first row
+Ybus_df.drop(Ybus_df.index[0], inplace=True)
 Ybus_df.to_csv('Ybus300.csv', index=False)
 counter=0
 for i in range(0, nb300):
