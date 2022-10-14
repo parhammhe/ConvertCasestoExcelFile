@@ -901,7 +901,11 @@ tap=np.ones(nl300)
 TAP= branch300_db['ratio'].to_numpy()
 i=np.nonzero(TAP)[0]
 tap[i]= TAP[i]
+angle=branch300_db['angle'].to_numpy()
+x= np.exp(1j * np.pi / 180 * angle)
+print(x)
 tap= tap * np.exp(1j * np.pi / 180 * branch300_db['angle'].to_numpy())
+print(tap)
 ## connection matrix for line & from buses
 Ytt= Ys + 1j * Bc / 2
 Yff= Ytt / (tap * np.conj(tap))
@@ -912,10 +916,8 @@ Buses_index= bus300_db.index
 Buses= bus300_db['bus_i'].to_numpy()
 #create a dictionary to store the index of each bus
 Buses_dict= dict(zip(Buses, Buses_index))
-branch300_db['fbus']= branch300_db['fbus'].map(Buses_dict)
-branch300_db['tbus']= branch300_db['tbus'].map(Buses_dict)
-f= branch300_db['fbus'].to_numpy()
-t= branch300_db['tbus'].to_numpy()
+f= branch300_db['fbus'].map(Buses_dict)
+t= branch300_db['tbus'].map(Buses_dict)
 # Connection matrix for line & from - to buses
 Cf=sp.coo_matrix((np.ones(nl300), (range(nl300), f)), (nl300, nb300)).tocsr()
 # Connection matrix for line & to - from buses
@@ -924,9 +926,7 @@ Ct=sp.coo_matrix((np.ones(nl300), (range(nl300), t)), (nl300, nb300)).tocsr()
 yf= csr_matrix((Yff, (range(nl300), f)), (nl300, nb300)) + csr_matrix((Yft, (range(nl300), t)), (nl300, nb300))
 yt= csr_matrix((Ytf, (range(nl300), f)), (nl300, nb300)) + csr_matrix((Ytt, (range(nl300), t)), (nl300, nb300))
 #build Ybus
-Ybus= Cf.T * yf + Ct.T * yt + \
-        csr_matrix((np.ones(nb300), (range(nb300), range(nb300))), (nb300, nb300))
-
+Ybus= Cf.T * yf + Ct.T * yt + csr_matrix((bus300_db['Gs'].to_numpy() + 1j * bus300_db['Bs'].to_numpy(), (range(nb300), range(nb300))), (nb300, nb300))
 # Create a csv file with the Bus data
 bus300_db.to_csv('bus300.csv', index=False)
 # Create a csv file with the Branch data
@@ -938,6 +938,12 @@ gencost300_db.to_csv('gencost300.csv', index=False)
 # Create a csv file with the Ybus data
 Ybus_df= pd.DataFrame(Ybus.toarray())
 Ybus_df.to_csv('Ybus300.csv', index=False)
-
+counter=0
+for i in range(0, nb300):
+    for j in range(0, nb300):
+        if Ybus[i, j] != 0:
+            print(counter,i, j, Ybus[i, j])
+            counter=counter+1
+#Export the Ybus matrix to a csv file
 
 print("This is a test")
