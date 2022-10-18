@@ -905,9 +905,7 @@ i=np.nonzero(TAP)[0]
 tap[i]= TAP[i]
 angle=branch300_db['angle'].to_numpy()
 x= np.exp(1j * np.pi / 180 * angle)
-print(x)
 tap= tap * np.exp(1j * np.pi / 180 * branch300_db['angle'].to_numpy())
-print(tap)
 ## connection matrix for line & from buses
 Ytt= Ys + 1j * Bc / 2
 Yff= Ytt / (tap * np.conj(tap))
@@ -953,11 +951,10 @@ Ybus_df= pd.DataFrame(Ybus.toarray())
 Ybus_df.drop(Ybus_df.index[0], inplace=True)
 Ybus_df.to_csv('Ybus300.csv', index=False)
 counter=0
-for i in range(0, nb300):
-    for j in range(0, nb300):
-        if Ybus[i, j] != 0:
-            print(counter,i, j, Ybus[i, j])
-            counter=counter+1
+# for i in range(0, nb300):
+#     for j in range(0, nb300):
+#         if Ybus[i, j] != 0:
+#             print(counter,i, j, Ybus[i, j])
+#             counter=counter+1
 #Export the Ybus matrix to a csv file
 
-print("This is a test")
